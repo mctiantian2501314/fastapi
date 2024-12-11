@@ -106,6 +106,9 @@ async def detail(request: Request, book_id: str = Query(..., description="书籍
             response = await client.get(detail_url, headers=headers, timeout=10, follow_redirects=True)
             response.raise_for_status()
 
+            # 等待页面加载完毕
+            await asyncio.sleep(10)  # 等待5秒，确保页面加载完毕
+
             content = response.text
             root = etree.HTML(content)
 
