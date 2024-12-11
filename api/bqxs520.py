@@ -83,6 +83,7 @@ async def search(query: str, request: Request):
 
 # 书籍详情页功能（提取章节相关逻辑整合到这里）
 @router.get("/detail")
+asy@router.get("/detail")
 async def detail(request: Request, book_id: str = Query(..., description="书籍ID")):
     headers = {
         "User-Agent": request.headers.get("User-Agent", "Mobile")
@@ -106,12 +107,8 @@ async def detail(request: Request, book_id: str = Query(..., description="书籍
             response = await client.get(detail_url, headers=headers, timeout=10, follow_redirects=True)
             response.raise_for_status()
 
-            # 等待页面加载完毕
-            await asyncio.sleep(1)  # 等待5秒，确保页面加载完毕
-
             content = response.text
             root = etree.HTML(content)
-
             # 提取书籍详情信息
             try:
                 bookname = root.xpath("string(//h1/span/text())")
