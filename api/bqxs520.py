@@ -46,6 +46,7 @@ async def search(query: str, request: Request):
             title = entry.find('span').get('title') if entry.find('span') else None
             href = entry.find('a').get('href') if entry.find('a') else None
             src = entry.find('img').get('src') if entry.find('img') else 'https://s2.loli.net/2024/11/10/RFcln7Wz2Y145VZ.jpg'
+
             desc_div = entry.select_one(".desc")
             desc_text = desc_div.get_text(strip=True) if desc_div else '暂无简介'
 
@@ -57,10 +58,17 @@ async def search(query: str, request: Request):
             else:
                 id1 = id2 = id3 = book_id = None
 
+            # 使用CSS选择器提取标签
+            itags = []
+            tag_spans = entry.select('.tags > span > a')
+            for tag_span in tag_spans:
+                itags.append(tag_span.text)
+
             results.append({
                 "book_name": title,
                 "img": src,
                 "text": desc_text,
+                "itag": ", ".join(itags),
                 "id": {
                     "id1": id1,
                     "id2": id2,
