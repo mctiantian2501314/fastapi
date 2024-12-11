@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query, Request
-# 其他已有的导入语句保持不变
+import json
 from bs4 import BeautifulSoup
 from fastapi.responses import JSONResponse
 import httpx
@@ -8,15 +8,15 @@ import re
 import asyncio
 from urllib.parse import quote
 from playwright.async_api import async_playwright
+
 # 创建一个APIRouter实例
 router = APIRouter()
 
 # 搜索功能
 @router.get("/search")
 async def search(query: str, request: Request):
-    # 这里headers字典定义需要缩进，表明它属于search函数内部的内容
     headers = {
-        "User-Agent": request.headers.get("User-Agent", "Mozilla/5.0 (Windows NT 10; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0")
+        "User-Agent": request.headers.get("User-Agent", "Mobile")
     }
     """
     根据输入的关键词在指定网站上进行书籍搜索，并返回搜索结果。
@@ -73,13 +73,11 @@ async def search(query: str, request: Request):
         return JSONResponse(content={"c": "200", "m": "成功响应", "data": results})
 
 
-
-
 # 书籍详情页功能（提取章节相关逻辑整合到这里）
 @router.get("/detail")
 async def detail(request: Request, book_id: str = Query(..., description="书籍ID")):
     headers = {
-        "User-Agent": request.headers.get("User-Agent", "Mozilla/5.0 (Windows NT 10; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0")
+        "User-Agent": request.headers.get("User-Agent", "Mobile")
     }
     """
     根据输入的书籍ID获取对应书籍的详细信息，包括书名、作者、更新时间等内容，同时提取第一个章节的id作为list_id返回，优先使用XPath获取主角信息，失败则用CSS选择器尝试获取。
