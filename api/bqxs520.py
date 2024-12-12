@@ -81,25 +81,29 @@ async def search(query: str, request: Request):
         return JSONResponse(content={"c": "200", "m": "成功响应", "data": results})
 
 
-# 书籍详情页功能（提取章节相关逻辑整合到这里）
+# 书籍详情页功能
 @router.get("/detail")
-asy@router.get("/detail")
 async def detail(request: Request, book_id: str = Query(..., description="书籍ID")):
     headers = {
         "User-Agent": request.headers.get("User-Agent", "Mobile")
     }
     """
-    根据输入的书籍ID获取对应书籍的详细信息，包括书名、作者、更新时间等内容，同时提取第一个章节的id作为list_id返回，优先使用XPath获取主角信息，失败则用CSS选择器尝试获取。
+    根据输入的书籍ID或完整书籍详情页链接获取对应书籍的详细信息，包括书名、作者、更新时间等内容，同时提取第一个章节的id作为list_id返回，优先使用XPath获取主角信息，失败则用CSS选择器尝试获取。
 
     参数:
     - request: 用于获取客户端请求相关信息的Request对象，从中获取请求头
-    - book_id: 从请求参数中获取的书籍ID字符串（通过Query获取，设置为必传参数）
+    - book_id: 从请求参数中获取的书籍ID字符串（通过Query获取，设置为必传参数），也支持直接传入完整链接
 
     返回:
     - JSONResponse: 包含获取详情状态码、消息以及书籍详细信息和以第一个章节id作为list_id的JSON响应
     """
+    # 判断传入的book_id是否为完整链接，如果是则提取其中的书籍ID部分
+    match = re.match(r'.*bqxs520.com/book/(.*)\.shtml', book_id)
+    if match:
+        book_id = match.group(1)
+
     if not book_id:
-        return JSONResponse(content={"c": "400", "m": "请输入书籍ID", "data": {}})
+        return JSONResponse(content={"c": "400", "m": "请输入书籍ID或有效链接", "data": {}})
 
     async with httpx.AsyncClient() as client:
         detail_url = f"https://www.bqxs520.com/book/{book_id}.shtml"
@@ -109,10 +113,10 @@ async def detail(request: Request, book_id: str = Query(..., description="书籍
 
             content = response.text
             root = etree.HTML(content)
+
             # 提取书籍详情信息
             try:
                 bookname = root.xpath("string(//h1/span/text())")
-                print(f"提取到的bookname原始值: {bookname}")
                 if bookname is None or bookname.strip() == "":
                     bookname = None
             except Exception as e:
@@ -259,14 +263,13 @@ async def detail(request: Request, book_id: str = Query(..., description="书籍
                         if clean_text:
                             protagonists.append(clean_text)
 
-            # 提取第一个章节的id（这里假设章节链接的onclick属性中有类似read(id)这样的格式来获取id，根据实际页面结构调整）
+            # 提取第一个章节的id
             chapter_links = root.xpath('//div[@class="chapterlist"]/a')
             first_chapter_id = ""
             if chapter_links:
                 first_link = chapter_links[0]
                 onclick_attr = first_link.get('onclick')
                 if onclick_attr:
-                    import re
                     match = re.search(r'read\((\d+)\)', onclick_attr)
                     if match:
                         first_chapter_id = match.group(1)
@@ -289,7 +292,6 @@ async def detail(request: Request, book_id: str = Query(..., description="书籍
                 'protagonist': ", ".join(protagonists),
                 "list_id": first_chapter_id
             }
-
             return JSONResponse(content={"c": "200", "m": "成功响应", "data": detail_results})
         except httpx.RequestError as e:
             print(f"请求发生错误: {e}")
