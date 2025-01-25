@@ -59,7 +59,7 @@ async def search_novels(keyword: str = Query(..., description="搜索关键词")
                 "intro": intro,
                 "wordcount": wordcount,
                 "img": img,
-                "url": url_value,
+                "url": "https://www.69hsz.com"+url_value,
                 "id": id_value
             })
 
