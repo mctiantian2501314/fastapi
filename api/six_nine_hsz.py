@@ -3,7 +3,6 @@ from fastapi import APIRouter, Query, HTTPException
 import requests
 from bs4 import BeautifulSoup
 from fastapi.responses import JSONResponse
-import json
 import re
 
 router = APIRouter()
@@ -11,7 +10,11 @@ router = APIRouter()
 @router.get("/search")
 async def search_novels(keyword: str = Query(..., description="搜索关键词")):
     if not keyword:
-        raise HTTPException(status_code=400, detail="请输入关键词")
+        return JSONResponse(content={
+            "c": "400",
+            "m": "请输入关键词",
+            "data": []
+        }, status_code=400)
     
     url = "https://www.69hsz.com/ss/"
     params = {
@@ -59,12 +62,12 @@ async def search_novels(keyword: str = Query(..., description="搜索关键词")
                 "intro": intro,
                 "wordcount": wordcount,
                 "img": img,
-                "url": "https://www.69hsz.com"+url_value,
+                "url": "https://www.69hsz.com" + url_value,
                 "id": id_value
             })
 
         result = {
-            "c": 200,
+            "c": "200",
             "m": "请求成功",
             "data": data_list
         }
@@ -72,6 +75,14 @@ async def search_novels(keyword: str = Query(..., description="搜索关键词")
         return JSONResponse(content=result, media_type="application/json")
 
     except requests.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"请求出错: {e}")
+        return JSONResponse(content={
+            "c": "500",
+            "m": f"请求失败,失败原因(请求出错) {e}",
+            "data": []
+        }, status_code=500)
     except Exception as ex:
-        raise HTTPException(status_code=500, detail=f"其他错误: {ex}")
+        return JSONResponse(content={
+            "c": "500",
+            "m": f"请求失败,失败原因(其他错误) {ex}",
+            "data": []
+        }, status_code=500)
