@@ -38,7 +38,7 @@ async def search_novels(keyword: str = Query(..., description="搜索关键词")
     }
 
     try:
-        response = requests.get(url, params=params, headers=headers)
+        response = requests.get(url, params=params, headers=headers,cookies=None)
         response.raise_for_status()  # 检查请求是否成功，失败则抛出异常
         soup = BeautifulSoup(response.text, 'html.parser')
 
