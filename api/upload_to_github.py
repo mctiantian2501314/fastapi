@@ -5,10 +5,11 @@ import os
 import random
 import string
 import json
+from datetime import datetime
 
 router = APIRouter()
 
-@router.post("/upload", description="上传本地文件到GitHub仓库，并随机命名文件，返回原始下载链接")
+@router.post("/upload", description="上传本地文件到GitHub仓库，并随机命名文件（包含时间戳），返回原始下载链接")
 async def upload_file_to_github(
     repo_name: str = Form(..., description="仓库名称（格式为'用户名/仓库名'）"),
     branch: str = Form(..., description="分支名称"),
@@ -29,8 +30,11 @@ async def upload_file_to_github(
     # 读取文件内容
     file_content = await file.read()
 
-    # 随机生成文件名
-    random_filename = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+    # 获取当前时间的时间戳
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+
+    # 随机生成文件名（包含时间戳）
+    random_filename = ''.join(random.choices(string.ascii_letters, k=4)) + timestamp
     file_extension = os.path.splitext(file.filename)[1]
     random_file_path = f"{random_filename}{file_extension}"
 
@@ -67,7 +71,8 @@ async def upload_file_to_github(
 
     if response.status_code in [201, 200]:
         # 获取原始下载链接
-        download_url = f"https://raw.githubusercontent.com/{repo_name}/{branch}/{random_file_path}"
+        download_url = f"https://raw.githubusercontent.com/{repo_name}/refs/heads/{branch}/SY/{random_file_path}"
+        #https://raw.githubusercontent.com/{repo_name}/refs/heads/{branch}/SY/{random_file_path}
         return {"download_url": download_url}
     else:
         raise HTTPException(status_code=400, detail=f"文件上传失败，错误信息：{response.json()}")
