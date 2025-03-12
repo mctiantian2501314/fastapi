@@ -9,7 +9,7 @@ from datetime import datetime
 
 router = APIRouter()
 
-@router.post("/upload", description="上传本地文件到GitHub仓库，并根据文件内容中的bookSourceName生成文件名（包含随机字母和时间戳），返回原始下载链接")
+@router.post("/upload", description="上传本地文件到GitHub仓库，并根据文件内容中的bookSourceName或sourceName生成文件名（包含随机字母和时间戳），返回原始下载链接")
 async def upload_file_to_github(
     repo_name: str = Form(..., description="仓库名称（格式为'用户名/仓库/上传到仓库具体目录'）"),
     branch: str = Form(..., description="分支名称"),
@@ -36,23 +36,23 @@ async def upload_file_to_github(
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="上传的文件不是有效的JSON格式")
 
-    # 提取bookSourceName字段的值
-    book_source_name = None
+    
+    name_field = None
     if isinstance(file_json, dict):
-        book_source_name = file_json.get("bookSourceName")
+        name_field = file_json.get("bookSourceName") or file_json.get("sourceName")
     elif isinstance(file_json, list) and len(file_json) > 0:
-        book_source_name = file_json[0].get("bookSourceName")
+        name_field = file_json[0].get("bookSourceName") or file_json[0].get("sourceName")
 
-    if not book_source_name:
-        raise HTTPException(status_code=200, detail="测试成功，但是不支持这个文件上传,文件没有书源特征哦。by天天的鸟蛋蛋的小提醒")
+    if not name_field:
+        raise HTTPException(status_code=400, detail="JSON文件中缺少bookSourceName或sourceName字段")
 
     # 获取当前时间的时间戳
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
-    # 随机生成文件名（包含bookSourceName、随机字母和时间戳）
-    random_letters = ''.join(random.choices(string.ascii_letters, k=4))
+    # 随机生成文件名（包含name_field、随机字母和时间戳）
+    random_letters = ''.join(random.choices(string.ascii_letters, k=0))
     file_extension = os.path.splitext(file.filename)[1]
-    random_file_name = f"{book_source_name}{random_letters}{timestamp}{file_extension}"
+    random_file_name = f"{name_field}{random_letters}{timestamp}{file_extension}"
 
     # 解析仓库名称和上传路径
     parts = repo_name.split("/")
