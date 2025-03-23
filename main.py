@@ -1,16 +1,18 @@
-#!/usr/bin/env python3
-# main.py
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import Response, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from public.usage import USAGE as html
 from api.hello import router as hello_router
 from api.bqxs520 import router as bqxs520_router
 from api.six_nine_hsz import router as hsz_router
-from api.upload_to_github import router as upload_router  
+
+from api.upload_to_github import router as upload_router
+import httpx
 
 app = FastAPI()
 
+# 启用 CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # 允许所有来源
@@ -22,10 +24,13 @@ app.add_middleware(
 app.include_router(hello_router, prefix="/hello")
 app.include_router(bqxs520_router, prefix="/bqxs520")
 app.include_router(hsz_router, prefix="/69hsz")
-app.include_router(upload_router, prefix="/github")  
+
+app.include_router(upload_router, prefix="/github")
+
 @app.get("/")
 def _root():
     return Response(content=html, media_type="text/html")
+
 @app.get("/proxy")
 async def proxy(request: Request):
     target_url = "https://ttdndd.serv00.net/cf.php"
